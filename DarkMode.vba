@@ -7,20 +7,30 @@
 ' Color codes for each style must be inserted into the code below  for both DarkMode and LightMode (see comments in Functions below)
 ' Original table styles are not preserved when switching back to light mode - you'll need to specify the default light style in code or use sub SetWorkbookTableStyle
 ' Save this macro in your PERSONAL.XLSB (and add it to your quick access bar!) so you can use dark mode in any new workbook, including non-macro enabled ones
+Function GetDarkFill() As String
+    GetDarkFill = GetSetting("ExcelDarkMode", "Colors", "Fill", "#2E3440")
+End Function
+
+Function GetDarkFont() As String
+    GetDarkFont = GetSetting("ExcelDarkMode", "Colors", "Font", "#FFFFFF")
+End Function
+
 Function DarkMode()
-    ' Set all tables to this dark table style
+    Dim f As String, t As String
+    f = GetDarkFill()
+    t = GetDarkFont()
+
     Call SetAllTableStyle("TableStyleDark1")
 
-    ' Dark colors for each style
-    Call UpdateStyleColors(styleName:="Normal", fillColorHex:="#2E3440", fontColorHex:="#FFFFFF", borderColorHex:="#454545")
-    Call UpdateStyleColors(styleName:="Heading 1", fillColorHex:="#2E3440", fontColorHex:="#FFFFFF")
-    Call UpdateStyleColors(styleName:="Heading 2", fillColorHex:="#2E3440", fontColorHex:="#FFFFFF")
-    Call UpdateStyleColors(styleName:="Heading 3", fillColorHex:="#2E3440", fontColorHex:="#FFFFFF")
-    Call UpdateStyleColors(styleName:="Heading 4", fillColorHex:="#2E3440", fontColorHex:="#FFFFFF")
-    Call UpdateStyleColors(styleName:="Title", fillColorHex:="#2E3440", fontColorHex:="#FFFFFF")
-    Call UpdateStyleColors(styleName:="Total", fillColorHex:="#2E3440", fontColorHex:="#FFFFFF")
+    Call UpdateStyleColors(styleName:="Normal", fillColorHex:=f, fontColorHex:=t, borderColorHex:="#454545")
+    Call UpdateStyleColors(styleName:="Heading 1", fillColorHex:=f, fontColorHex:=t)
+    Call UpdateStyleColors(styleName:="Heading 2", fillColorHex:=f, fontColorHex:=t)
+    Call UpdateStyleColors(styleName:="Heading 3", fillColorHex:=f, fontColorHex:=t)
+    Call UpdateStyleColors(styleName:="Heading 4", fillColorHex:=f, fontColorHex:=t)
+    Call UpdateStyleColors(styleName:="Title", fillColorHex:=f, fontColorHex:=t)
+    Call UpdateStyleColors(styleName:="Total", fillColorHex:=f, fontColorHex:=t)
     Call UpdateStyleColors(styleName:="Note", fillColorHex:="#B2B2B2", fontColorHex:="#000000", borderColorHex:="#454545")
-    Call UpdateStyleColors(styleName:="Explanatory Text", fillColorHex:="#2E3440", fontColorHex:="#FFFFFF", borderColorHex:="#454545")
+    Call UpdateStyleColors(styleName:="Explanatory Text", fillColorHex:=f, fontColorHex:=t, borderColorHex:="#454545")
 End Function
 
 Function LightMode()
@@ -321,6 +331,49 @@ Function CustomPropertyExists(propName As String) As Boolean
 End Function
 
 
+Function IsValidHex(ByVal s As String) As Boolean
+    s = Replace(s, "#", "")
+    IsValidHex = (s Like "[0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f]")
+End Function
+
+Sub SetDarkColors()
+    Dim a As String, fillHex As String, fontHex As String
+
+    a = InputBox("Background color:" & vbCrLf & _
+        "1 = Nord blue-grey (#2E3440)" & vbCrLf & _
+        "2 = Pure black (#000000)" & vbCrLf & _
+        "3 = Near black (#121212)" & vbCrLf & _
+        "4 = VS Code grey (#1E1E1E)" & vbCrLf & _
+        "or type your own hex, e.g. #0B0B0B", "Dark mode background", "2")
+    If a = "" Then Exit Sub
+
+    Select Case a
+        Case "1": fillHex = "#2E3440"
+        Case "2": fillHex = "#000000"
+        Case "3": fillHex = "#121212"
+        Case "4": fillHex = "#1E1E1E"
+        Case Else: fillHex = a
+    End Select
+    If Not IsValidHex(fillHex) Then
+        MsgBox "Not a valid hex color: " & a, vbExclamation
+        Exit Sub
+    End If
+
+    fontHex = InputBox("Text color (hex):", "Dark mode text", GetDarkFont())
+    If fontHex = "" Then Exit Sub
+    If Not IsValidHex(fontHex) Then
+        MsgBox "Not a valid hex color: " & fontHex, vbExclamation
+        Exit Sub
+    End If
+
+    SaveSetting "ExcelDarkMode", "Colors", "Fill", fillHex
+    SaveSetting "ExcelDarkMode", "Colors", "Font", fontHex
+
+    ' If this workbook is currently dark, apply the new colors right away
+    If CustomPropertyExists("DARK_MODE_0292") Then
+        If ActiveWorkbook.CustomDocumentProperties("DARK_MODE_0292").Value = 1 Then DarkMode
+    End If
+End Sub
 
 
 
